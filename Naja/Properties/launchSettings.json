@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Naja": {
+      "commandName": "Project",
+      "commandLineArgs": "c:\\naja\\return_2.naja"
+    }
+  }
+}
