@@ -2,6 +2,9 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
+using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Naja
 {
@@ -47,33 +50,87 @@ section '.reloc' fixups data readable discardable       ; needed for Win32s
 
         static void Main(string[] args)
         {
-            string sourceFile = args[0];
-            string path = Path.GetDirectoryName(sourceFile);
-            string assemblyFile =Path.Combine(path, Path.GetFileNameWithoutExtension(sourceFile) + ".asm");
-
-            string source = File.ReadAllText(sourceFile).Trim();
-            Lexer lexer = new Lexer(source);
-
             var grammar = new Grammar();
-            if (!grammar.TryParseGrammar(lexer, out ASTNode rootNode))
+
+            string sourceFile = args!=null && args.Length > 0 ? args[0]:"";
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || !string.IsNullOrEmpty(sourceFile))
             {
-                //Error has already been printed
-                return;
+                string path = Path.GetDirectoryName(sourceFile);
+                string assemblyFile = Path.Combine(path, Path.GetFileNameWithoutExtension(sourceFile) + ".asm");
+
+                string source = File.ReadAllText(sourceFile).Trim();
+                Lexer lexer = new Lexer(source);
+
+                if (!grammar.TryParseGrammar(lexer, out ASTNode rootNode))
+                {
+                    //Error has already been printed
+                    return;
+                }
+
+                Debug.WriteLine(rootNode.Prettify());
+
+                var match = reMatcher.Match(source);
+                string returnCode = match.Groups["RC"].Value;
+                System.IO.File.WriteAllText(assemblyFile, string.Format(assembly_format, returnCode));
+
+                Process procCompiler = new Process();
+                procCompiler.StartInfo = new ProcessStartInfo();
+                procCompiler.StartInfo.FileName = @"c:\fasm\fasm.exe";
+                procCompiler.StartInfo.Arguments = assemblyFile;
+                procCompiler.Start();
+
+                procCompiler.WaitForExit();
+            }
+            else
+            {
+                var rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase).Replace("file:","");
+                Log("RootDir:" + rootDir);
+                var validTestCasesPath = Path.Combine(rootDir, "TestFiles", "Valid");
+                var invalidTestCasesPath = Path.Combine(rootDir, "TestFiles", "Invalid");
+
+                foreach (string filepath in Directory.GetFiles(validTestCasesPath,"*.naja"))
+                {
+                    string source = File.ReadAllText(filepath);
+                    Lexer lexer = new Lexer(source);
+                    if (!lexer.IsLexable){
+                        Log($"FAILED  - {Path.GetFileName(filepath)} unable to Lex file");
+
+                    }
+                    else if (!grammar.TryParseGrammar(lexer, out ASTNode rootNode))
+                    {
+                        Log($"FAILED  - {Path.GetFileName(filepath)} was supposed to succeed");    
+                    }
+                    else
+                    {
+                        Log($"SUCCESS - {Path.GetFileName(filepath)} was supposed to succeed");    
+                    }
+                }
+                foreach (string filepath in Directory.GetFiles(invalidTestCasesPath, "*.naja"))
+                {
+                    string source = File.ReadAllText(filepath);
+                    Lexer lexer = new Lexer(source);
+                    if (!lexer.IsLexable)
+                    {
+                        Log($"FAILED  - {Path.GetFileName(filepath)} unable to Lex file");
+                    }
+                    else if (grammar.TryParseGrammar(lexer, out ASTNode rootNode))
+                    {
+                        Log($"FAILED  - {Path.GetFileName(filepath)} was supposed to fail");
+                    }
+                    else
+                    {
+                        Log($"SUCCESS - {Path.GetFileName(filepath)} was supposed to fail");
+                    }
+                }
             }
 
-            Debug.WriteLine(rootNode.Prettify());
+        }
 
-            var match = reMatcher.Match(source);
-            string returnCode = match.Groups["RC"].Value;
-            System.IO.File.WriteAllText(assemblyFile, string.Format(assembly_format, returnCode));
-
-            Process procCompiler = new Process();
-            procCompiler.StartInfo = new ProcessStartInfo();
-            procCompiler.StartInfo.FileName = @"c:\fasm\fasm.exe";
-            procCompiler.StartInfo.Arguments = assemblyFile;
-            procCompiler.Start();
-
-            procCompiler.WaitForExit();
+        public static void Log(string toLog)
+        {
+            Debug.WriteLine(toLog);
+            Console.WriteLine(toLog);
         }
     }
+
 }

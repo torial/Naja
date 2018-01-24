@@ -37,6 +37,7 @@ namespace Naja
         public static readonly Token Identifier;
         public static readonly Token IntLiteral;
         public static readonly Token NewLine;
+        public static readonly Token SpaceSpecial;
 
 
         static class Patterns {
@@ -54,10 +55,11 @@ namespace Naja
             public const string ReturnKeyword = "return";
             public const string Identifier = @"[a-zA-Z]\w*";
             public const string IntLiteral = @"[0-9]+";
-            public const string NewLine = @"\r\n";
+            public const string NewLine = @"(\r\n)|(\n)";
+            public const string SpaceSpecial = @"(?<=\W) ";
         }
         public static Dictionary<string, Token> RegisteredTokens;
-        public static Dictionary<string, Token> WhitespaceTokens;
+        public static Dictionary<string, Token> NonWordTokens;
         static Tokens()
         {
             BraceOpen = Token.Create(nameof(BraceOpen), Patterns.BraceOpen);
@@ -76,11 +78,11 @@ namespace Naja
             SpaceIndent = Token.Create(nameof(SpaceIndent), Patterns.SpaceIndent);
             Tab = Token.Create(nameof(Tab), Patterns.Tab);
             NewLine = Token.Create(nameof(NewLine), Patterns.NewLine);
+            SpaceSpecial = Token.Create(nameof(SpaceSpecial), Patterns.SpaceSpecial);
 
             RegisteredTokens = new Dictionary<string, Token>()
             {
                 {BraceOpen.Name, BraceOpen }, {BraceClose.Name, BraceClose },
-                {ParenthesisOpen.Name, ParenthesisOpen }, {ParenthesisClose.Name, ParenthesisClose },
                 {Colon.Name,Colon },
                 {SpaceBetweenTokens.Name,SpaceBetweenTokens },
                 {IntType.Name,IntType },
@@ -91,12 +93,13 @@ namespace Naja
                 {IntLiteral.Name,IntLiteral }
             };
 
-            WhitespaceTokens = new Dictionary<string, Token>()
+            NonWordTokens = new Dictionary<string, Token>()
             {
                 {SpaceIndent.Name,SpaceIndent },
                 {Tab.Name,Tab },
                 {NewLine.Name,NewLine },
-
+                {ParenthesisOpen.Name, ParenthesisOpen }, {ParenthesisClose.Name, ParenthesisClose },
+                {SpaceSpecial.Name, SpaceSpecial}
             };
 
         }

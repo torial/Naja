@@ -56,10 +56,13 @@ namespace Naja
                 return string.IsNullOrEmpty(cleaned);
             }
         }
+        private readonly string debug;
 
         public Lexer(string fileContents)
         {
             cleaned = reValidTokens.Replace(fileContents, ValidTokenMatcher);
+            //lexemes.Clear();//For debug purposes ONLY!
+            //debug = reValidTokens.Replace(fileContents, DebugValidTokenMatcher);
             CurrentLexeme = 0;
         }
 
@@ -72,6 +75,12 @@ namespace Naja
             }
 
             return lexemes[CurrentLexeme++];
+        }
+
+        private string DebugValidTokenMatcher(Match match)
+        {
+            ValidTokenMatcher(match);
+            return lexemes[lexemes.Count - 1].Type;
         }
 
         private string ValidTokenMatcher(Match match)
@@ -106,7 +115,7 @@ namespace Naja
             tokens.Length--;
 
             tokens.Append(@")\b)|(?:");
-            foreach(var token in Tokens.WhitespaceTokens.Values)
+            foreach(var token in Tokens.NonWordTokens.Values)
             {
                 tokens.Append("(?<");
                 tokens.Append(token.Name);

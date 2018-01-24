@@ -30,11 +30,11 @@ namespace Naja
             ProductionRules = new Dictionary<Token, GrammarRule>();
             ProductionRules[ProgramNonTerminal] = new GrammarRule(FunctionNonTerminal);
             ProductionRules[FunctionNonTerminal] = new GrammarRule(Tokens.DefKeyword,
-                Tokens.Identifier,
+                Tokens.Identifier,Tokens.ParenthesisOpen,Tokens.ParenthesisClose,
                 Tokens.AsKeyword, Tokens.IntType,
                 Tokens.NewLine, StatementNonTerminal);
             ProductionRules[StatementNonTerminal] = new GrammarRule(
-                Tokens.Tab, Tokens.ReturnKeyword, ExpressionNonTerminal);
+                Tokens.SpaceIndent, Tokens.ReturnKeyword, ExpressionNonTerminal);
             ProductionRules[ExpressionNonTerminal] = new GrammarRule(Tokens.IntLiteral);
         }
 
@@ -72,7 +72,7 @@ namespace Naja
 
                     var lexeme = lexer.Next();
                     //Skip over whitespace
-                    while(lexeme.Type == Tokens.SpaceBetweenTokens.Name)
+                    while(lexeme.Type == Tokens.SpaceBetweenTokens.Name || lexeme.Type == Tokens.SpaceSpecial.Name)
                     {
                         lexeme = lexer.Next();
                     }
@@ -95,7 +95,7 @@ namespace Naja
         private void ErrorOccurred(ReversableLexer context, string error)
         {
             context.ShouldUndo = true;
-            System.Diagnostics.Debug.WriteLine($"{DateTime.Now.ToLongTimeString()}: {error}");
+            Program.Log($"{DateTime.Now.ToLongTimeString()}: {error}");
         }
     }
 
