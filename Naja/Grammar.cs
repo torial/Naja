@@ -13,7 +13,8 @@ namespace Naja
         public static Token StatementNonTerminal = Token.Create(nameof(StatementNonTerminal), "<statement>");
         public static Token ExpressionNonTerminal = Token.Create(nameof(ExpressionNonTerminal),"<expression>");
 
-        public static List<Token> NonTerminals = new List<Token>() { ProgramNonTerminal,
+        public static List<Token> NonTerminals = new List<Token>() { 
+            ProgramNonTerminal,
             FunctionNonTerminal,
             StatementNonTerminal,
             ExpressionNonTerminal
