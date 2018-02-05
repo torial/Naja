@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 namespace Naja
 {
     class CodeGeneration
@@ -13,10 +14,32 @@ namespace Naja
             nodeGenerator[Grammar.FunctionNonTerminal.Name] = GenerateFunctionCode;
             nodeGenerator[Grammar.StatementNonTerminal.Name] = GenerateStatementCode;
             nodeGenerator[Grammar.ExpressionNonTerminal.Name] = GenerateExpressionCode;
+            nodeGenerator[Grammar.UnaryNonTerminal.Name] = GenerateUnaryCode;
+        }
+
+        private static void GenerateUnaryCode(ASTNode node, StringBuilder output)
+        {
+            var unaryOp = node.Children.First();
+            switch(unaryOp.Type){
+                case nameof(Tokens.NotKeyword):
+                    output.Replace("{unary}", "TODO SOMETHING HERE");
+                    break;
+                case nameof(Tokens.BitwiseComplement):
+                    output.Replace("{unary}", "TODO SOMETHING HERE");
+                    break;
+                case nameof(Tokens.NegationUnary):
+                    output.Replace("{unary}", "TODO SOMETHING HERE");
+                    break;
+            }
         }
 
         private static void GenerateExpressionCode(ASTNode node, StringBuilder output)
         {
+            bool hasUnary = node.Children.Exists(n => n.Type == Grammar.UnaryNonTerminal.Name);
+            if (hasUnary)
+            {
+                output.Replace("{expression}","{expression}\n{unary}");
+            }
             var intLiteral = node.Children.Find(n => n.Type == Tokens.IntLiteral.Name);
             output.Replace("{expression}",intLiteral.Text);
         }

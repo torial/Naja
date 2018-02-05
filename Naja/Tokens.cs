@@ -38,7 +38,9 @@ namespace Naja
         public static readonly Token IntLiteral;
         public static readonly Token NewLine;
         public static readonly Token SpaceSpecial;
-
+        public static readonly Token NotKeyword;
+        public static readonly Token BitwiseComplement;
+        public static readonly Token NegationUnary; //ie -9
 
         static class Patterns {
             public const string BraceOpen = "{";
@@ -57,6 +59,9 @@ namespace Naja
             public const string IntLiteral = @"[0-9]+";
             public const string NewLine = @"(\r\n)|(\n)";
             public const string SpaceSpecial = @"(?<=\W) ";
+            public const string NotKeyword = "not";
+            public const string NegationUnary = "-";
+            public const string BitwiseComplement = "~";
         }
         public static Dictionary<string, Token> RegisteredTokens;
         public static Dictionary<string, Token> NonWordTokens;
@@ -80,6 +85,10 @@ namespace Naja
             NewLine = Token.Create(nameof(NewLine), Patterns.NewLine);
             SpaceSpecial = Token.Create(nameof(SpaceSpecial), Patterns.SpaceSpecial);
 
+            NotKeyword = Token.Create(nameof(NotKeyword), Patterns.NotKeyword);
+            NegationUnary = Token.Create(nameof(NegationUnary), Patterns.NegationUnary);
+            BitwiseComplement = Token.Create(nameof(BitwiseComplement), Patterns.BitwiseComplement);
+
             RegisteredTokens = new Dictionary<string, Token>()
             {
                 {BraceOpen.Name, BraceOpen }, {BraceClose.Name, BraceClose },
@@ -90,7 +99,10 @@ namespace Naja
                 {DefKeyword.Name,DefKeyword },
                 {ReturnKeyword.Name,ReturnKeyword },
                 {Identifier.Name,Identifier },
-                {IntLiteral.Name,IntLiteral }
+                {IntLiteral.Name,IntLiteral },
+                {NotKeyword.Name, NotKeyword},
+                {NegationUnary.Name, NegationUnary},
+                {BitwiseComplement.Name, BitwiseComplement}
             };
 
             NonWordTokens = new Dictionary<string, Token>()
