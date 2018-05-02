@@ -9,13 +9,6 @@ namespace Naja
 {
     class Program
     {
-        private static Regex reMatcher = new Regex("def main([(][)])? as int[:]?\\s*^\treturn\\s+(?<RC>\\d+)\\s*",RegexOptions.Compiled | RegexOptions.Multiline);
-
-
-        public static class Tokens
-        {
-
-        }
 
         static void Main(string[] args)
         {

@@ -22,13 +22,13 @@ namespace Naja
             var unaryOp = node.Children.First();
             switch(unaryOp.Type){
                 case nameof(Tokens.NotKeyword):
-                    output.Replace("{unary}", "TODO SOMETHING HERE");
+                    output.Replace("{unary}", "cmp eax, 0\nmov eax, 0\nsete al");
                     break;
                 case nameof(Tokens.BitwiseComplement):
-                    output.Replace("{unary}", "TODO SOMETHING HERE");
+                    output.Replace("{unary}", "not eax");
                     break;
                 case nameof(Tokens.NegationUnary):
-                    output.Replace("{unary}", "TODO SOMETHING HERE");
+                    output.Replace("{unary}", "neg eax");
                     break;
             }
         }
@@ -36,18 +36,22 @@ namespace Naja
         private static void GenerateExpressionCode(ASTNode node, StringBuilder output)
         {
             bool hasUnary = node.Children.Exists(n => n.Type == Grammar.UnaryNonTerminal.Name);
+            var intLiteral = node.Children.Find(n => n.Type == Tokens.IntLiteral.Name);
+            string statement = "mov eax, " + intLiteral.Text;
             if (hasUnary)
             {
-                output.Replace("{expression}","{expression}\n{unary}");
+                output.Replace("{expression}", statement + "\n{unary}\n{expression}");
             }
-            var intLiteral = node.Children.Find(n => n.Type == Tokens.IntLiteral.Name);
-            output.Replace("{expression}",intLiteral.Text);
+            else
+            {
+                output.Replace("{expression}", statement);
+            }
         }
 
         private static void GenerateStatementCode(ASTNode node, StringBuilder output)
         {
             var returnStatement = node.Children.Find(n => n.Type == Tokens.ReturnKeyword.Name);
-            output.Replace("{function_body}", "ret {expression}");
+            output.Replace("{function_body}", "{expression}\nret eax");
             ApplyToChildren(node, output);
         }
 
