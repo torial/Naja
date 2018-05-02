@@ -1,0 +1,2 @@
+﻿def main() as int
+    return not 0
