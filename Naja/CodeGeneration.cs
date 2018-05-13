@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using System.Runtime.Serialization;
+
 namespace Naja
 {
     class CodeGeneration
@@ -9,6 +11,7 @@ namespace Naja
         static Dictionary<string, Action<ASTNode, StringBuilder>> nodeGenerator;
         static CodeGeneration()
         {
+            //Each non terminal has a function that handles its special case.  
             nodeGenerator = new Dictionary<string, Action<ASTNode, StringBuilder>>();
             nodeGenerator[Grammar.ProgramNonTerminal.Name] = GenerateProgramCode;
             nodeGenerator[Grammar.FunctionNonTerminal.Name] = GenerateFunctionCode;
@@ -17,24 +20,108 @@ namespace Naja
             nodeGenerator[Grammar.UnaryNonTerminal.Name] = GenerateUnaryCode;
         }
 
+        /// <summary>
+        /// Generates the program code:  currently this entails just using a Windows template for a single function, but will expand
+        /// as more options / features added.
+        /// </summary>
+        /// <param name="node">Program Non Terminal</param>
+        /// <param name="output">String builder that accumulates the assembly code.</param>
+        private static void GenerateProgramCode(ASTNode node, StringBuilder output)
+        {
+            #region Program Template
+            const string program_template = @"
+format PE GUI
+entry {function_name}
+
+section '.text' code readable executable
+
+{function_name}:
+        {function_body}
+        call [ExitProcess]
+
+section '.idata' import data readable writeable
+
+dd 0,0,0,RVA kernel_name, RVA kernel_table
+dd 0,0,0,0,0
+
+kernel_table: 
+    ExitProcess dd RVA _ExitProcess
+    dd 0
+    kernel_name db 'KERNEL32.DLL',0
+
+    _ExitProcess dw 0
+    db 'ExitProcess',0
+
+section '.reloc' fixups data readable discardable; needed for Win32s
+";
+            #endregion
+            output.Append(program_template);
+            ApplyToChildren(node, output);
+        }
+
+        /// <summary>
+        /// For each child of a non-terminal node, it will be processed if it is a non-terminal.
+        /// 
+        /// <important>It IS expected that the non-terminal code will handle all terminal children it has.</important>
+        /// </summary>
+        /// <param name="node">Non Terminal Node</param>
+        /// <param name="output">String builder that accumulates the assembly code.</param>
+        /// <param name="skipFirst">Whether the first child node should be skipped  This may have to be changed to having a skipped node list??.</param>
+        private static void ApplyToChildren(ASTNode node, StringBuilder output, bool skipFirst = false)
+        {
+            bool firstNode = true;
+            foreach (ASTNode child in node.Children)
+            {
+                if (firstNode && skipFirst)
+                {
+                    firstNode = false;
+                    continue;
+                }
+
+                firstNode = false;
+                if (nodeGenerator.TryGetValue(child.Type, out Action<ASTNode, StringBuilder> nonterminalBuilder))
+                {
+                    nonterminalBuilder(child, output);
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// Generates the unary code.
+        /// 
+        /// <important>Expects the expression value to be in EAX!</important>
+        /// </summary>
+        /// <param name="node">Non Terminal UNARY Node</param>
+        /// <param name="output">String builder that accumulates the assembly code.</param>
         private static void GenerateUnaryCode(ASTNode node, StringBuilder output)
         {
             var unaryOp = node.Children.First();
-            switch(unaryOp.Type){
+            StringBuilder unaryCode = new StringBuilder();
+            //Forces the expression code to added before the unary code is.
+            ApplyToChildren(node, unaryCode, skipFirst: true);
+            switch (unaryOp.Type)
+            {
                 case nameof(Tokens.NotKeyword):
-                    output.Replace("{unary}", "cmp eax, 0\nmov eax, 0\nsete al");
+                    unaryCode.AppendLine("cmp eax, 0\nmov eax, 0\nsete al");
                     break;
                 case nameof(Tokens.BitwiseComplement):
-                    output.Replace("{unary}", "not eax");
+                    unaryCode.AppendLine("not eax");
                     break;
-                case nameof(Tokens.NegationUnary):
-                    output.Replace("{unary}", "neg eax");
+                case nameof(Tokens.Minus):
+                    unaryCode.AppendLine("neg eax");
                     break;
+                default:
+                    throw new InvalidGrammarException($"Unary Non Terminal did not have a unary first child terminal.  Had {unaryOp.Type} instead.");
             }
+            output.Append(unaryCode.ToString());
         }
 
         private static void GenerateExpressionCode(ASTNode node, StringBuilder output)
         {
+            StringBuilder expressionCode = new StringBuilder();
+
+
             bool hasUnary = node.Children.Exists(n => n.Type == Grammar.UnaryNonTerminal.Name);
             var intLiteral = node.Children.Find(n => n.Type == Tokens.IntLiteral.Name);
             string statement = "mov eax, " + intLiteral.Text;
@@ -62,58 +149,11 @@ namespace Naja
             ApplyToChildren(node, output);
         }
 
-        private static void GenerateProgramCode(ASTNode node, StringBuilder output)
-        {
-            const string program_template = @"
-format PE GUI
-entry {function_name}
-
-section '.text' code readable executable
-
-{function_name}:
-        {function_body}
-        call [ExitProcess]
-
-section '.idata' import data readable writeable
-
-dd 0,0,0,RVA kernel_name, RVA kernel_table
-dd 0,0,0,0,0
-
-kernel_table: 
-	ExitProcess dd RVA _ExitProcess
-    dd 0
-	kernel_name db 'KERNEL32.DLL',0
-
-  	_ExitProcess dw 0
-    db 'ExitProcess',0
-
-section '.reloc' fixups data readable discardable; needed for Win32s
-";
-            output.Append(program_template);
-            ApplyToChildren(node, output);
-        }
-
-        private static void ApplyToChildren(ASTNode node, StringBuilder output)
-        {
-            foreach (ASTNode child in node.Children)
-            {
-                if (nodeGenerator.TryGetValue(child.Type, out Action<ASTNode, StringBuilder> nonterminalBuilder))
-                {
-                    nonterminalBuilder(child, output);
-                }
-            }
-
-        }
-
-        public CodeGeneration()
-        {
-            
-        }
 
         public string GenerateForNode(ASTNode rootNode)
         {
             StringBuilder sbOutput = new StringBuilder();
-            if (Grammar.NonTerminals.FindIndex((t)=>t.Name == rootNode.Type)==-1)
+            if (Grammar.NonTerminals.FindIndex((t) => t.Name == rootNode.Type) == -1)
             {
                 Program.Log($"Unable to generate code.  Nonterminal `{rootNode.Type}` was provided.");
                 return string.Empty;
@@ -122,4 +162,26 @@ section '.reloc' fixups data readable discardable; needed for Win32s
             return sbOutput.ToString();
         }
     }
+
+    #region Exceptions
+    [Serializable]
+    internal class InvalidGrammarException : Exception
+    {
+        public InvalidGrammarException()
+        {
+        }
+
+        public InvalidGrammarException(string message) : base(message)
+        {
+        }
+
+        public InvalidGrammarException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected InvalidGrammarException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
+    #endregion
 }

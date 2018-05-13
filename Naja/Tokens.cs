@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace Naja
@@ -10,6 +11,7 @@ namespace Naja
     {
         public string Name;
         public string MatchExpression;
+        public bool HasSubTokens = false;
 
         public static Token Create(string name, string matchExpression)
         {
@@ -17,6 +19,22 @@ namespace Naja
             token.Name = name;
             token.MatchExpression = matchExpression;
             return token;
+        }
+    }
+
+    class KleeneStar:Token
+    {
+        public Token[] Tokens;
+        public KleeneStar(params Token[] tokens)
+        {
+            Name = "<kleene-star>";
+            Tokens = tokens;
+            if (tokens == null || tokens.Length == 0)
+            {
+                throw new InvalidGrammarException('Kleene Star must have sub-tokens!  None were provided.');
+            }
+            HasSubTokens = true;
+            MatchExpression =@"\(" + string.Join(@"\s*", from t in tokens select t.MatchExpression) + @"\)*";
         }
     }
 
@@ -40,7 +58,10 @@ namespace Naja
         public static readonly Token SpaceSpecial;
         public static readonly Token NotKeyword;
         public static readonly Token BitwiseComplement;
-        public static readonly Token NegationUnary; //ie -9
+        public static readonly Token Minus; //ie -9
+        public static readonly Token Plus;
+        public static readonly Token Multiply;
+        public static readonly Token Divide;
 
         static class Patterns {
             public const string BraceOpen = "{";
@@ -62,6 +83,9 @@ namespace Naja
             public const string NotKeyword = "not";
             public const string NegationUnary = "-";
             public const string BitwiseComplement = "~";
+            public const string Plus = "[+]";
+            public const string Multiply = "[*]";
+            public const string Divide = "[/]";
         }
         public static Dictionary<string, Token> RegisteredTokens;
         public static Dictionary<string, Token> NonWordTokens;
@@ -86,8 +110,12 @@ namespace Naja
             SpaceSpecial = Token.Create(nameof(SpaceSpecial), Patterns.SpaceSpecial);
 
             NotKeyword = Token.Create(nameof(NotKeyword), Patterns.NotKeyword);
-            NegationUnary = Token.Create(nameof(NegationUnary), Patterns.NegationUnary);
+            Minus = Token.Create(nameof(Minus), Patterns.NegationUnary);
             BitwiseComplement = Token.Create(nameof(BitwiseComplement), Patterns.BitwiseComplement);
+
+            Plus = Token.Create(nameof(Plus), Patterns.Plus);
+            Multiply = Token.Create(nameof(Multiply), Patterns.Multiply);
+            Divide = Token.Create(nameof(Divide), Patterns.Divide);
 
             RegisteredTokens = new Dictionary<string, Token>()
             {
@@ -101,8 +129,11 @@ namespace Naja
                 {Identifier.Name,Identifier },
                 {IntLiteral.Name,IntLiteral },
                 {NotKeyword.Name, NotKeyword},
-                {NegationUnary.Name, NegationUnary},
-                {BitwiseComplement.Name, BitwiseComplement}
+                {Minus.Name, Minus},
+                {BitwiseComplement.Name, BitwiseComplement},
+                {Plus.Name, Plus},
+                {Multiply.Name, Multiply},
+                {Divide.Name, Divide}
             };
 
             NonWordTokens = new Dictionary<string, Token>()
