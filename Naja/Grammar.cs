@@ -146,6 +146,7 @@ namespace Naja
                 }
                 
             }
+            currentNode.Children.Add(kleeneNode);
             return true;
         }
 
