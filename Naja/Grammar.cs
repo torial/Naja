@@ -162,7 +162,9 @@ namespace Naja
                 }
                 
             }
-            currentNode.Children.Add(kleeneNode);
+            //only add kleene node if it has children
+            if (kleeneNode.Children.Count > 0)
+                currentNode.Children.Add(kleeneNode);
             return true;
         }
 

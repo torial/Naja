@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace Naja
 {
@@ -20,6 +21,39 @@ namespace Naja
             this.Text = text;
             this.Type = type;
             Children = new List<ASTNode>();
+        }
+
+        public bool Exists(Predicate<ASTNode> matcher)
+        {
+            var exists = Children.Exists(matcher);
+            if (exists)
+                return true;
+
+            foreach(var child in Children)
+            {
+                exists = child.Exists(matcher);
+                if (exists)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public ASTNode Find(Predicate<ASTNode> matcher)
+        {
+            var exists = Children.Find(matcher);
+            if (exists !=null)
+                return exists;
+
+            foreach (var child in Children)
+            {
+                exists = child.Find(matcher);
+                if (exists!=null)
+                    return exists;
+            }
+
+            return  null;
+
         }
 
         public string Prettify(int depth = 0)

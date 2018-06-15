@@ -122,8 +122,8 @@ section '.reloc' fixups data readable discardable; needed for Win32s
             StringBuilder expressionCode = new StringBuilder();
 
 
-            bool hasUnary = node.Children.Exists(n => n.Type == Grammar.UnaryNonTerminal.Name);
-            var intLiteral = node.Children.Find(n => n.Type == Tokens.IntLiteral.Name);
+            bool hasUnary = node.Exists(n => n.Type == Grammar.UnaryNonTerminal.Name);
+            var intLiteral = node.Find(n => n.Type == Tokens.IntLiteral.Name);
             string statement = "mov eax, " + intLiteral.Text;
             if (hasUnary)
             {
@@ -137,14 +137,14 @@ section '.reloc' fixups data readable discardable; needed for Win32s
 
         private static void GenerateStatementCode(ASTNode node, StringBuilder output)
         {
-            var returnStatement = node.Children.Find(n => n.Type == Tokens.ReturnKeyword.Name);
+            var returnStatement = node.Find(n => n.Type == Tokens.ReturnKeyword.Name);
             output.Replace("{function_body}", "{expression}\nret eax");
             ApplyToChildren(node, output);
         }
 
         private static void GenerateFunctionCode(ASTNode node, StringBuilder output)
         {
-            var Id = node.Children.Find(n => n.Type == Tokens.Identifier.Name);
+            var Id = node.Find(n => n.Type == Tokens.Identifier.Name);
             output.Replace("{function_name}", Id.Text);
             ApplyToChildren(node, output);
         }
