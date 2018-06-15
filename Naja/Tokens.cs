@@ -31,11 +31,37 @@ namespace Naja
             Tokens = tokens;
             if (tokens == null || tokens.Length == 0)
             {
-                throw new InvalidGrammarException('Kleene Star must have sub-tokens!  None were provided.');
+                throw new InvalidGrammarException("Kleene Star must have sub-tokens!  None were provided.");
             }
             HasSubTokens = true;
             MatchExpression =@"\(" + string.Join(@"\s*", from t in tokens select t.MatchExpression) + @"\)*";
         }
+    }
+
+    static class Patterns
+    {
+        public const string BraceOpen = "{";
+        public const string BraceClose = "}";
+        public const string ParenthesisOpen = @"\(";
+        public const string ParenthesisClose = @"\)";
+        public const string Colon = ":";
+        public const string Tab = @"\t";
+        public const string SpaceBetweenTokens = "[ ]";
+        public const string SpaceIndent = "[ ]{4}";
+        public const string IntType = "int";
+        public const string AsKeyword = "as";
+        public const string DefKeyword = "def";
+        public const string ReturnKeyword = "return";
+        public const string Identifier = @"[a-zA-Z]\w*";
+        public const string IntLiteral = @"[0-9]+";
+        public const string NewLine = @"(\r\n)|(\n)";
+        public const string SpaceSpecial = @"(?<=\W) ";
+        public const string NotKeyword = "not";
+        public const string NegationUnary = "-";
+        public const string BitwiseComplement = "~";
+        public const string Plus = "[+]";
+        public const string Multiply = "[*]";
+        public const string Divide = "[/]";
     }
 
     static class Tokens
@@ -63,30 +89,7 @@ namespace Naja
         public static readonly Token Multiply;
         public static readonly Token Divide;
 
-        static class Patterns {
-            public const string BraceOpen = "{";
-            public const string BraceClose = "}";
-            public const string ParenthesisOpen = @"\(";
-            public const string ParenthesisClose = @"\)";
-            public const string Colon = ":";
-            public const string Tab = @"\t";
-            public const string SpaceBetweenTokens = "[ ]";
-            public const string SpaceIndent = "[ ]{4}";
-            public const string IntType = "int";
-            public const string AsKeyword = "as";
-            public const string DefKeyword = "def";
-            public const string ReturnKeyword = "return";
-            public const string Identifier = @"[a-zA-Z]\w*";
-            public const string IntLiteral = @"[0-9]+";
-            public const string NewLine = @"(\r\n)|(\n)";
-            public const string SpaceSpecial = @"(?<=\W) ";
-            public const string NotKeyword = "not";
-            public const string NegationUnary = "-";
-            public const string BitwiseComplement = "~";
-            public const string Plus = "[+]";
-            public const string Multiply = "[*]";
-            public const string Divide = "[/]";
-        }
+
         public static Dictionary<string, Token> RegisteredTokens;
         public static Dictionary<string, Token> NonWordTokens;
         static Tokens()

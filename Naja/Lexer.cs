@@ -21,11 +21,13 @@ namespace Naja
         public bool ShouldUndo = false;
         private Lexer lexer;
         private int currentLexeme;
+        public List<string> Errors;
 
         public ReversableLexer(Lexer lexer)
         {
             this.lexer = lexer;
             this.currentLexeme = lexer.CurrentLexeme;
+            this.Errors = new List<string>();
         }
 
         public void Dispose()
@@ -39,6 +41,7 @@ namespace Naja
 
     class Lexer
     {
+        public const string EndOfFile = "<None>";
         static Regex reValidTokens;
 
         static Lexer()
@@ -67,6 +70,15 @@ namespace Naja
         }
 
         public int CurrentLexeme;
+        public string CurrentLexemeName {
+            get{
+                if (CurrentLexeme < 0 || CurrentLexeme >= lexemes.Count)
+                {
+                    return EndOfFile;
+                }
+                var lexeme = lexemes[CurrentLexeme];
+                return lexeme.Type+"("+lexeme.Text+")";
+            }}
         public Lexeme Next()
         {
             if (CurrentLexeme < 0 || CurrentLexeme >= lexemes.Count )
