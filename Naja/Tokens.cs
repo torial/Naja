@@ -57,7 +57,7 @@ namespace Naja
         public const string NewLine = @"(\r\n)|(\n)";
         public const string SpaceSpecial = @"(?<=\W) ";
         public const string NotKeyword = "not";
-        public const string NegationUnary = "-";
+        public const string NegationUnary = "[-]";
         public const string BitwiseComplement = "~";
         public const string Plus = "[+]";
         public const string Multiply = "[*]";
@@ -89,9 +89,12 @@ namespace Naja
         public static readonly Token Multiply;
         public static readonly Token Divide;
 
+        public static readonly Dictionary<string,Token> Keywords;
+
 
         public static Dictionary<string, Token> RegisteredTokens;
         public static Dictionary<string, Token> NonWordTokens;
+        public static Dictionary<string, Token> UnaryTokens;
         static Tokens()
         {
             BraceOpen = Token.Create(nameof(BraceOpen), Patterns.BraceOpen);
@@ -124,7 +127,6 @@ namespace Naja
             {
                 {BraceOpen.Name, BraceOpen }, {BraceClose.Name, BraceClose },
                 {Colon.Name,Colon },
-                {SpaceBetweenTokens.Name,SpaceBetweenTokens },
                 {IntType.Name,IntType },
                 {AsKeyword.Name,AsKeyword },
                 {DefKeyword.Name,DefKeyword },
@@ -132,9 +134,6 @@ namespace Naja
                 {Identifier.Name,Identifier },
                 {IntLiteral.Name,IntLiteral },
                 {NotKeyword.Name, NotKeyword},
-                {Minus.Name, Minus},
-                {BitwiseComplement.Name, BitwiseComplement},
-                {Plus.Name, Plus},
                 {Multiply.Name, Multiply},
                 {Divide.Name, Divide}
             };
@@ -145,9 +144,23 @@ namespace Naja
                 {Tab.Name,Tab },
                 {NewLine.Name,NewLine },
                 {ParenthesisOpen.Name, ParenthesisOpen }, {ParenthesisClose.Name, ParenthesisClose },
-                {SpaceSpecial.Name, SpaceSpecial}
+                {SpaceSpecial.Name, SpaceSpecial},
+                {SpaceBetweenTokens.Name,SpaceBetweenTokens },
             };
 
+            UnaryTokens = new Dictionary<string, Token>()
+            {
+                {Minus.Name, Minus},
+                {BitwiseComplement.Name, BitwiseComplement},
+                {Plus.Name, Plus}
+            };
+
+            Keywords = new Dictionary<string, Token>() {
+                {Patterns.AsKeyword, AsKeyword},
+                {Patterns.DefKeyword, DefKeyword},
+                {Patterns.IntType,IntType},
+                {Patterns.NotKeyword,NotKeyword}, 
+                {Patterns.ReturnKeyword, ReturnKeyword} };
         }
     }
 

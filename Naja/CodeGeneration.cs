@@ -120,7 +120,8 @@ section '.reloc' fixups data readable discardable; needed for Win32s
         private static void GenerateExpressionCode(ASTNode node, StringBuilder output)
         {
             StringBuilder expressionCode = new StringBuilder();
-
+            //What we need to do:
+            //a) 
 
             bool hasUnary = node.Exists(n => n.Type == Grammar.UnaryNonTerminal.Name);
             var intLiteral = node.Find(n => n.Type == Tokens.IntLiteral.Name);
@@ -138,7 +139,7 @@ section '.reloc' fixups data readable discardable; needed for Win32s
         private static void GenerateStatementCode(ASTNode node, StringBuilder output)
         {
             var returnStatement = node.Find(n => n.Type == Tokens.ReturnKeyword.Name);
-            output.Replace("{function_body}", "{expression}\nret eax");
+            output.Replace("{function_body}", "{expression}\n\tret eax");
             ApplyToChildren(node, output);
         }
 
@@ -150,7 +151,7 @@ section '.reloc' fixups data readable discardable; needed for Win32s
         }
 
 
-        public string GenerateForNode(ASTNode rootNode)
+        public string GenerateCodeFromNode(ASTNode rootNode)
         {
             StringBuilder sbOutput = new StringBuilder();
             if (Grammar.NonTerminals.FindIndex((t) => t.Name == rootNode.Type) == -1)

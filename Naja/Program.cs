@@ -68,7 +68,7 @@ namespace Naja
                     else
                     {
                         Log($"SUCCESS - {Path.GetFileName(filepath)} was supposed to succeed");    
-                        string assembler_code = generator.GenerateForNode(rootNode);
+                        string assembler_code = generator.GenerateCodeFromNode(rootNode);
                         Log(assembler_code);
                     }
                 }

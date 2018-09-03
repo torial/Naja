@@ -14,6 +14,11 @@ namespace Naja
         public string Text;
 
         public static readonly Lexeme None = new Lexeme() { Type = "None", Text = "None" };
+
+        public override string ToString()
+        {
+            return $"{Type}({Text})";
+        }
     }
 
     class ReversableLexer : IDisposable
@@ -89,6 +94,29 @@ namespace Naja
             return lexemes[CurrentLexeme++];
         }
 
+        public Lexeme Previous()
+        {
+            if (CurrentLexeme < 0 || CurrentLexeme >= lexemes.Count)
+            {
+                return Lexeme.None;
+            }
+
+            return lexemes[CurrentLexeme--];
+        }
+
+        public string Dump()
+        {
+            StringBuilder sb = new StringBuilder();
+            Lexeme next = null;
+            while (next!=Lexeme.None)
+            {
+                next = Next();
+                sb.Append(next.ToString());
+                sb.Append(" ");
+            }
+            return sb.ToString();
+        }
+
         private string DebugValidTokenMatcher(Match match)
         {
             ValidTokenMatcher(match);
@@ -103,6 +131,15 @@ namespace Naja
                 var group = match.Groups[i];
                 if (group.Success)
                 {
+                    if (group.Name == Tokens.Identifier.Name)
+                    {
+                        Token token;
+                        if (Tokens.Keywords.TryGetValue(match.Value, out token))
+                        {
+                            lexeme.Type = token.Name;
+                            break; //Identifier aggressively matches, so this protects against that.
+                        }
+                    }
                     lexeme.Type = group.Name;
                     break;
                 }
@@ -138,6 +175,21 @@ namespace Naja
             }
             //get rid of last |
             tokens.Length--;
+
+            tokens.Append(@")|(?:");
+            foreach (var token in Tokens.UnaryTokens.Values)
+            {
+                tokens.Append("(?<");
+                tokens.Append(token.Name);
+                tokens.Append(">");
+                tokens.Append(token.MatchExpression);
+                tokens.Append(")|");
+
+            }
+            //get rid of last |
+            tokens.Length--;
+
+
             tokens.Append(")");
             return new Regex(tokens.ToString(), RegexOptions.ExplicitCapture );
         }
